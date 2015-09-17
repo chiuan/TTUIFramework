@@ -6,13 +6,21 @@ public class UITopBar : TTUIPageBase {
 
     public UITopBar() : base(UIWindowType.Fixed, UIWindowShowMode.DoNothing, UIWindowColliderMode.None)
     {
-
     }
 
     public override void Show()
     {
-        GameObject go = GameObject.Instantiate(Resources.Load("UIPrefab/Topbar")) as GameObject;
-        PushUIGameObject(go);
+        if (this.gameObject == null)
+        {
+            GameObject go = GameObject.Instantiate(Resources.Load("UIPrefab/Topbar")) as GameObject;
+            PushUIGameObject(go);
+        }
+        
+    }
+
+    public override void Refresh()
+    {
+
     }
 
 

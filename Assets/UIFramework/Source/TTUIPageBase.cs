@@ -2,7 +2,7 @@
 namespace TinyTeam.UI
 {
     using UnityEngine;
-    using System.Collections;
+    using System.Collections.Generic;
     using UnityEngine.UI;
 
     /// <summary>
@@ -12,10 +12,15 @@ namespace TinyTeam.UI
 
     public abstract class TTUIPageBase
     {
-        //this window's type
+        public string windowName = string.Empty;
+
+        //this page's id
+        public int windowID = -1;
+
+        //this page's type
         public UIWindowType windowType = UIWindowType.Normal;
 
-        //how to show this window.
+        //how to show this page.
         public UIWindowShowMode showMode = UIWindowShowMode.DoNothing;
 
         //the background collider mode
@@ -23,6 +28,8 @@ namespace TinyTeam.UI
 
         //this ui gameobject
         public GameObject gameObject;
+
+        public static Dictionary<int, TTUIPageBase> allPages;
 
         public virtual void Show() { }
 
@@ -39,6 +46,16 @@ namespace TinyTeam.UI
             colliderMode = col;
         }
 
+        internal bool CheckIfNeedBack()
+        {
+            if (windowType == UIWindowType.Fixed || windowType == UIWindowType.PopUp) return false;
+            else if (showMode == UIWindowShowMode.NoNeedBack) return false;
+            return true;
+        }
+
+        /// <summary>
+        /// push this page's ui gameobject to anchor
+        /// </summary>
         internal void PushUIGameObject(GameObject ui)
         {
             if (TTUIRoot.Instance == null || ui == null) return;
@@ -63,6 +80,21 @@ namespace TinyTeam.UI
 
             ui.GetComponent<RectTransform>().anchoredPosition = anchorPos;
             ui.GetComponent<RectTransform>().sizeDelta = sizeDel;
+        }
+
+        internal void ShowUIGameObject()
+        {
+            if(this.gameObject == null)
+            {
+                Debug.LogError("wanna show ui:" + windowName + " is not exist ui gameobject!");
+            }
+
+            //check this kind of ui should cached
+            if (CheckIfNeedBack())
+            {
+
+            }
+
         }
 
     }
