@@ -1,13 +1,17 @@
-﻿
-namespace TinyTeam.UI
+﻿namespace TinyTeam.UI
 {
+    using System;
     using UnityEngine;
     using System.Collections.Generic;
     using UnityEngine.UI;
 
     /// <summary>
     /// Each Page Mean one UI 'window'
+    /// 3 steps:
+    /// instance ui > refresh ui by data > show
     /// 
+    /// by chiuan
+    /// 2015-09
     /// </summary>
 
     public abstract class TTUIPageBase
@@ -26,14 +30,47 @@ namespace TinyTeam.UI
         //the background collider mode
         public UIWindowColliderMode colliderMode = UIWindowColliderMode.None;
 
-        //this ui gameobject
+        //path to load ui
+        public string uiPath = string.Empty;
+
+        //this ui's gameobject
         public GameObject gameObject;
+        public Transform transform;
 
-        public static Dictionary<int, TTUIPageBase> allPages;
+        //all pages with the union id
+        public static Dictionary<System.Type, TTUIPageBase> allPages;
 
-        public virtual void Show() { }
+        //control 1>2>3>4>5 each page close will back show the previus page.
+        public static Stack<TTUIPageBase> backPagesStack;
+
+        /// <summary>
+        /// 1:instance ui
+        /// </summary>
+        public virtual void InstanceUI()
+        {
+            if (this.gameObject == null)
+            {
+                GameObject go = GameObject.Instantiate(Resources.Load(uiPath)) as GameObject;
+                AnchorUIGameObject(go);
+                
+                //after instance should awake init.
+                Awake();
+            }
+        }
+
+        public virtual void Show()
+        {
+            //THREE STEPS
+            InstanceUI();
+
+            if (this.gameObject == null) return;
+
+            Refresh();
+        }
 
         public virtual void Hide() { }
+
+        public virtual void Awake() { }
 
         public virtual void Refresh() { }
 
@@ -56,46 +93,44 @@ namespace TinyTeam.UI
         /// <summary>
         /// push this page's ui gameobject to anchor
         /// </summary>
-        internal void PushUIGameObject(GameObject ui)
+        internal void AnchorUIGameObject(GameObject ui)
         {
             if (TTUIRoot.Instance == null || ui == null) return;
 
             this.gameObject = ui;
+            this.transform = ui.transform;
 
             Vector3 anchorPos = ui.GetComponent<RectTransform>().anchoredPosition;
             Vector2 sizeDel = ui.GetComponent<RectTransform>().sizeDelta;
 
             if (windowType == UIWindowType.Fixed)
             {
-                ui.transform.parent = TTUIRoot.Instance.fixedRoot;
+                ui.transform.SetParent(TTUIRoot.Instance.fixedRoot);
             }
             else if(windowType == UIWindowType.Normal)
             {
-                ui.transform.parent = TTUIRoot.Instance.normalRoot;
+                ui.transform.SetParent(TTUIRoot.Instance.normalRoot);
             }
             else if(windowType == UIWindowType.PopUp)
             {
-                ui.transform.parent = TTUIRoot.Instance.popupRoot;
+                ui.transform.SetParent(TTUIRoot.Instance.popupRoot);
             }
 
             ui.GetComponent<RectTransform>().anchoredPosition = anchorPos;
             ui.GetComponent<RectTransform>().sizeDelta = sizeDel;
         }
 
-        internal void ShowUIGameObject()
+        /// <summary>
+        /// Show target page
+        /// </summary>
+        public static void ShowPage<T>() where T :TTUIPageBase
         {
-            if(this.gameObject == null)
+            Type t = typeof(T);
+            if (allPages.ContainsKey(t))
             {
-                Debug.LogError("wanna show ui:" + windowName + " is not exist ui gameobject!");
+                allPages[t].Show();
             }
-
-            //check this kind of ui should cached
-            if (CheckIfNeedBack())
-            {
-
-            }
-
+            //allPages.Add(t,T.);
         }
-
     }
 }

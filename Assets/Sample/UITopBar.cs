@@ -1,26 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
 using TinyTeam.UI;
+using UnityEngine.UI;
 
 public class UITopBar : TTUIPageBase {
 
     public UITopBar() : base(UIWindowType.Fixed, UIWindowShowMode.DoNothing, UIWindowColliderMode.None)
     {
+        uiPath = "UIPrefab/Topbar";
     }
 
-    public override void Show()
+    public override void Awake()
     {
-        if (this.gameObject == null)
+        this.gameObject.transform.Find("btn_back").GetComponent<Button>().onClick.AddListener(() =>
         {
-            GameObject go = GameObject.Instantiate(Resources.Load("UIPrefab/Topbar")) as GameObject;
-            PushUIGameObject(go);
-        }
-        
-    }
-
-    public override void Refresh()
-    {
-
+            Debug.Log("Back&Close Current Page");
+        });
     }
 
 
