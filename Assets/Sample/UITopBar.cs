@@ -15,6 +15,7 @@ public class UITopBar : TTUIPage {
         this.gameObject.transform.Find("btn_back").GetComponent<Button>().onClick.AddListener(() =>
         {
             Debug.Log("Back&Close Current Page");
+            TTUIPage.ClosePage();
         });
     }
 
