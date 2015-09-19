@@ -14,7 +14,7 @@
     /// 2015-09
     /// </summary>
 
-    public abstract class TTUIPageBase
+    public abstract class TTUIPage
     {
         public string windowName = string.Empty;
 
@@ -37,11 +37,11 @@
         public GameObject gameObject;
         public Transform transform;
 
-        //all pages with the union id
-        public static Dictionary<System.Type, TTUIPageBase> allPages;
+        //all pages with the union type
+        public static Dictionary<string, TTUIPage> allPages;
 
         //control 1>2>3>4>5 each page close will back show the previus page.
-        public static Stack<TTUIPageBase> backPagesStack;
+        public static Stack<TTUIPage> backPagesStack;
 
         /// <summary>
         /// 1:instance ui
@@ -74,9 +74,9 @@
 
         public virtual void Refresh() { }
 
-        private TTUIPageBase() { }
+        private TTUIPage() { }
 
-        public TTUIPageBase(UIWindowType type, UIWindowShowMode mod,UIWindowColliderMode col)
+        public TTUIPage(UIWindowType type, UIWindowShowMode mod,UIWindowColliderMode col)
         {
             windowType = type;
             showMode = mod;
@@ -123,14 +123,49 @@
         /// <summary>
         /// Show target page
         /// </summary>
-        public static void ShowPage<T>() where T :TTUIPageBase
+        public static void ShowPage<T>() where T :TTUIPage,new()
         {
             Type t = typeof(T);
-            if (allPages.ContainsKey(t))
+            string pageName = t.ToString();
+
+            if (allPages == null)
             {
-                allPages[t].Show();
+                allPages = new Dictionary<string, TTUIPage>();
             }
-            //allPages.Add(t,T.);
+            
+            if (allPages.ContainsKey(pageName))
+            {
+                allPages[pageName].Show();
+                return;
+            }
+
+            T instance = new T();
+            allPages.Add(pageName, instance);
+            instance.Show();
+        }
+
+        public static void ShowPage(string pageName,TTUIPage pageInstance)
+        {
+            if(string.IsNullOrEmpty(pageName) || pageInstance == null)
+            {
+                Debug.LogError("[UI] show page error with :" + pageName + " maybe null instance.");
+                return;
+            }
+
+            if (allPages == null)
+            {
+                allPages = new Dictionary<string, TTUIPage>();
+            }
+
+            if (allPages.ContainsKey(pageName))
+            {
+                allPages[pageName].Show();
+                return;
+            }
+
+            allPages.Add(pageName, pageInstance);
+            pageInstance.Show();
+
         }
     }
 }

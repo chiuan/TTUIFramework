@@ -3,7 +3,7 @@ using System.Collections;
 using TinyTeam.UI;
 using UnityEngine.UI;
 
-public class UISkillPage : TTUIPageBase {
+public class UISkillPage : TTUIPage {
 
     public UISkillPage() : base(UIWindowType.Normal, UIWindowShowMode.HideOther, UIWindowColliderMode.None)
     {
@@ -14,5 +14,6 @@ public class UISkillPage : TTUIPageBase {
     {
 
     }
+
 
 }

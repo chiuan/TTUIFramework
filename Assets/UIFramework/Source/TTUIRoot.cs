@@ -90,7 +90,7 @@
             can.overrideSorting = true;
             can.sortingOrder = sort;
 
-            GraphicRaycaster gr = go.AddComponent<GraphicRaycaster>();
+            go.AddComponent<GraphicRaycaster>();
 
             return go;
         }

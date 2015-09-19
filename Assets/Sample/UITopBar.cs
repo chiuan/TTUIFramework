@@ -3,7 +3,7 @@ using System.Collections;
 using TinyTeam.UI;
 using UnityEngine.UI;
 
-public class UITopBar : TTUIPageBase {
+public class UITopBar : TTUIPage {
 
     public UITopBar() : base(UIWindowType.Fixed, UIWindowShowMode.DoNothing, UIWindowColliderMode.None)
     {

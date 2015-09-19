@@ -7,8 +7,8 @@ public class GameMain : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        TTUIPageBase.ShowPage<UITopBar>();
-        new UIMainPage().Show();
+        TTUIPage.ShowPage<UITopBar>();
+        TTUIPage.ShowPage<UIMainPage>();
     }
 	
 	// Update is called once per frame
