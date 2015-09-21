@@ -3,7 +3,7 @@
     using System;
     using UnityEngine;
     using System.Collections.Generic;
-    using UnityEngine.UI;
+    //using UnityEngine.UI;
 
     /// <summary>
     /// Each Page Mean one UI 'window'
@@ -141,7 +141,7 @@
             colliderMode = col;
             windowName = this.GetType().ToString();
 
-            Debug.LogWarning("[UI] create page:" + ToString());
+            //Debug.LogWarning("[UI] create page:" + ToString());
         }
 
         internal bool CheckIfNeedBack()
@@ -251,30 +251,15 @@
             Type t = typeof(T);
             string pageName = t.ToString();
 
-            if (m_allPages == null)
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
             {
-                m_allPages = new Dictionary<string, TTUIPage>();
-            }
-
-            TTUIPage page = null;
-            if (m_allPages.ContainsKey(pageName))
-            {
-                //if sub page is active before.
-                if (m_allPages[pageName].isActive() == false)
-                {
-                    m_allPages[pageName].Show();
-                }
-                page = m_allPages[pageName];
+                ShowPage(pageName, m_allPages[pageName]);
             }
             else
             {
                 T instance = new T();
-                m_allPages.Add(pageName, instance);
-                instance.Show();
-                page = instance;
+                ShowPage(pageName, instance);
             }
-
-            PopNode(page);
         }
 
         public static void ShowPage(string pageName,TTUIPage pageInstance)
