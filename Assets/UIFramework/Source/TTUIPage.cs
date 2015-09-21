@@ -159,6 +159,9 @@
 
             Vector3 anchorPos = ui.GetComponent<RectTransform>().anchoredPosition;
             Vector2 sizeDel = ui.GetComponent<RectTransform>().sizeDelta;
+            Vector3 scale = ui.GetComponent<RectTransform>().localScale;
+
+            //Debug.Log("anchorPos:" + anchorPos + "|sizeDel:" + sizeDel);
 
             if (windowType == UIWindowType.Fixed)
             {
@@ -175,6 +178,7 @@
 
             ui.GetComponent<RectTransform>().anchoredPosition = anchorPos;
             ui.GetComponent<RectTransform>().sizeDelta = sizeDel;
+            ui.GetComponent<RectTransform>().localScale = scale;
         }
 
         public override string ToString()
@@ -299,6 +303,8 @@
         /// </summary>
         public static void ClosePage()
         {
+            Debug.Log("Back&Close PageNodes Count:" + m_currentPageNodes.Count);
+
             if (m_currentPageNodes == null || m_currentPageNodes.Count <= 1) return;
 
             TTUIPage closePage = m_currentPageNodes[m_currentPageNodes.Count - 1];

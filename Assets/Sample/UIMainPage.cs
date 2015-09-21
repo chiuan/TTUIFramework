@@ -15,7 +15,7 @@ public class UIMainPage : TTUIPage {
         this.transform.Find("btn_skill").GetComponent<Button>().onClick.AddListener(() =>
         {
             Debug.Log("open skill");
-            TTUIPage.ShowPage<UISkillPage>();
+            ShowPage<UISkillPage>();
         });
     }
 
