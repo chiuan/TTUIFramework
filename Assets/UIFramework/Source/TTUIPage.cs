@@ -3,7 +3,6 @@
     using System;
     using UnityEngine;
     using System.Collections.Generic;
-    //using UnityEngine.UI;
 
     /// <summary>
     /// Each Page Mean one UI 'window'
@@ -274,6 +273,7 @@
             {
                 m_allPages = new Dictionary<string, TTUIPage>();
             }
+
             TTUIPage page = null;
             if (m_allPages.ContainsKey(pageName))
             {
@@ -299,7 +299,7 @@
         /// </summary>
         public static void ClosePage()
         {
-            if (m_currentPageNodes == null || m_currentPageNodes.Count <= 0) return;
+            if (m_currentPageNodes == null || m_currentPageNodes.Count <= 1) return;
 
             TTUIPage closePage = m_currentPageNodes[m_currentPageNodes.Count - 1];
             m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
