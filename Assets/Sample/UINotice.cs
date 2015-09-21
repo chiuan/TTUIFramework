@@ -13,7 +13,7 @@ public class UINotice : TTUIPage
 
     public override void Awake()
     {
-        this.gameObject.transform.Find("btn_confim").GetComponent<Button>().onClick.AddListener(() =>
+        this.gameObject.transform.Find("content/btn_confim").GetComponent<Button>().onClick.AddListener(() =>
         {
             Hide();
         });
