@@ -2,7 +2,9 @@
 {
     using System;
     using UnityEngine;
+    using System.Collections;
     using System.Collections.Generic;
+    using Object = UnityEngine.Object;
 
     /// <summary>
     /// Each Page Mean one UI 'window'
@@ -15,14 +17,14 @@
 
     #region define
 
-    public enum UIWindowType
+    public enum UIType
     {
         Normal,    // 可推出界面(UIMainMenu,UIRank等)
         Fixed,     // 固定窗口(UITopBar等)
         PopUp,     // 模式窗口
     }
 
-    public enum UIWindowShowMode
+    public enum UIMode
     {
         DoNothing,
         HideOther,     // 闭其他界面
@@ -30,7 +32,7 @@
         NoNeedBack,    // 关闭TopBar,关闭其他界面,不加入backSequence队列
     }
 
-    public enum UIWindowColliderMode
+    public enum UICollider
     {
         None,      // 显示该界面不包含碰撞背景
         Normal,    // 碰撞透明背景
@@ -40,19 +42,19 @@
 
     public abstract class TTUIPage
     {
-        public string windowName = string.Empty;
+        public string name = string.Empty;
 
         //this page's id
-        public int windowID = -1;
+        public int id = -1;
 
         //this page's type
-        public UIWindowType windowType = UIWindowType.Normal;
+        public UIType type = UIType.Normal;
 
         //how to show this page.
-        public UIWindowShowMode showMode = UIWindowShowMode.DoNothing;
+        public UIMode mode = UIMode.DoNothing;
 
         //the background collider mode
-        public UIWindowColliderMode colliderMode = UIWindowColliderMode.None;
+        public UICollider collider = UICollider.None;
 
         //path to load ui
         public string uiPath = string.Empty;
@@ -81,30 +83,85 @@
             }
         }
 
-        #region virtual api
+        //record this ui load mode.async or sync.
+        private bool isAsyncUI = false;
 
-        /// <summary>
-        /// 1:instance ui
-        /// </summary>
-        public virtual void InstanceUI()
+        //delegate load ui function.
+        public static Func<string,Object> delegateSyncLoadUI = null;
+        public static Action<string,Action<Object>> delegateAsyncLoadUI = null;
+
+        #region virtual api
+        
+        ///When Instance UI Ony Once.
+        public virtual void Awake() { }
+
+        ///Show UI Refresh Eachtime.
+        public virtual void Refresh() { }
+
+        ///Active this UI
+        public virtual void Active()
         {
-            if (this.gameObject == null)
-            {
-                GameObject go = GameObject.Instantiate(Resources.Load(uiPath)) as GameObject;
-                AnchorUIGameObject(go);
-                
-                //after instance should awake init.
-                Awake();
-            }
+            this.gameObject.SetActive(true);
         }
 
-        public virtual void Show()
+        ///Deactive this UI
+        public virtual void Hide()
         {
-            //1:instance ui
-            InstanceUI();
+            this.gameObject.SetActive(false);
+        }
 
-            //protected.
-            if (this.gameObject == null) return;
+        #endregion
+
+        #region internal api
+
+        private TTUIPage() { }
+        public TTUIPage(UIType type, UIMode mod,UICollider col)
+        {
+            this.type = type;
+            this.mode = mod;
+            this.collider = col;
+            this.name = this.GetType().ToString();
+
+            //when create one page.
+            //bind special delegate .
+            TTUIBind.Bind();
+            //Debug.LogWarning("[UI] create page:" + ToString());
+        }
+
+        /// <summary>
+        /// Sync Show UI Logic
+        /// </summary>
+        protected void Show()
+        {
+            //1:instance UI
+            if (this.gameObject == null)
+            {
+                GameObject go = null;
+                if (delegateSyncLoadUI != null)
+                {
+                    Object o = delegateSyncLoadUI(uiPath);
+                    go = o != null ? GameObject.Instantiate(o) as GameObject: null;
+                }
+                else
+                {
+                    go = GameObject.Instantiate(Resources.Load(uiPath)) as GameObject;
+                }
+
+                //protected.
+                if (go == null)
+                {
+                    Debug.LogError("[UI] Cant sync load your ui prefab.");
+                    return;
+                }
+
+                AnchorUIGameObject(go);
+
+                //after instance should awake init.
+                Awake();
+
+                //mark this ui sync ui
+                isAsyncUI = false;
+            }
 
             //2:refresh ui component.
             Refresh();
@@ -113,77 +170,113 @@
             Active();
         }
 
-        public virtual void Hide()
+        /// <summary>
+        /// Async Show UI Logic
+        /// </summary>
+        protected void Show(Action callback)
         {
-            this.gameObject.SetActive(false);
+            TTUIRoot.Instance.StartCoroutine(AsyncShow(callback));
         }
 
-        public virtual void Awake() { }
-
-        public virtual void Refresh() { }
-
-        public virtual void Active()
+        IEnumerator AsyncShow(Action callback)
         {
-            this.gameObject.SetActive(true);
-        }
+            //1:Instance UI
+            if(this.gameObject == null)
+            {
+                GameObject go = null;
+                bool _loading = true;
+                delegateAsyncLoadUI(uiPath, (o) =>
+                {
+                    go = o != null ? GameObject.Instantiate(o) as GameObject : null;
+                    AnchorUIGameObject(go);
+                    Awake();
+                    isAsyncUI = true;
+                    _loading = false;
+                });
 
-        #endregion
+                float _t0 = Time.realtimeSinceStartup;
+                while (_loading)
+                {
+                    if(Time.realtimeSinceStartup - _t0 >= 10.0f)
+                    {
+                        Debug.LogError("[UI] WTF async load your ui prefab timeout!");
+                        yield break;
+                    }
+                    yield return null;
+                }
+            }
 
-        #region internal api
+            //2:refresh ui component.
+            Refresh();
 
-        private TTUIPage() { }
+            //3:animation active.
+            Active();
 
-        public TTUIPage(UIWindowType type, UIWindowShowMode mod,UIWindowColliderMode col)
-        {
-            windowType = type;
-            showMode = mod;
-            colliderMode = col;
-            windowName = this.GetType().ToString();
-
-            //Debug.LogWarning("[UI] create page:" + ToString());
+            if (callback != null) callback();
         }
 
         internal bool CheckIfNeedBack()
         {
-            if (windowType == UIWindowType.Fixed || windowType == UIWindowType.PopUp) return false;
-            else if (showMode == UIWindowShowMode.NoNeedBack) return false;
+            if (type == UIType.Fixed || type == UIType.PopUp) return false;
+            else if (mode == UIMode.NoNeedBack) return false;
             return true;
         }
 
-        internal void AnchorUIGameObject(GameObject ui)
+        protected void AnchorUIGameObject(GameObject ui)
         {
             if (TTUIRoot.Instance == null || ui == null) return;
 
             this.gameObject = ui;
             this.transform = ui.transform;
 
-            Vector3 anchorPos = ui.GetComponent<RectTransform>().anchoredPosition;
-            Vector2 sizeDel = ui.GetComponent<RectTransform>().sizeDelta;
-            Vector3 scale = ui.GetComponent<RectTransform>().localScale;
+            //check if this is ugui or (ngui)?
+            Vector3 anchorPos = Vector3.zero;
+            Vector2 sizeDel = Vector2.zero;
+            Vector3 scale = Vector3.one;
+            if (ui.GetComponent<RectTransform>() != null)
+            {
+                anchorPos = ui.GetComponent<RectTransform>().anchoredPosition;
+                sizeDel = ui.GetComponent<RectTransform>().sizeDelta;
+                scale = ui.GetComponent<RectTransform>().localScale;
+            }
+            else
+            {
+                anchorPos = ui.transform.localPosition;
+                scale = ui.transform.localScale;
+            }
 
             //Debug.Log("anchorPos:" + anchorPos + "|sizeDel:" + sizeDel);
 
-            if (windowType == UIWindowType.Fixed)
+            if (type == UIType.Fixed)
             {
                 ui.transform.SetParent(TTUIRoot.Instance.fixedRoot);
             }
-            else if(windowType == UIWindowType.Normal)
+            else if(type == UIType.Normal)
             {
                 ui.transform.SetParent(TTUIRoot.Instance.normalRoot);
             }
-            else if(windowType == UIWindowType.PopUp)
+            else if(type == UIType.PopUp)
             {
                 ui.transform.SetParent(TTUIRoot.Instance.popupRoot);
             }
 
-            ui.GetComponent<RectTransform>().anchoredPosition = anchorPos;
-            ui.GetComponent<RectTransform>().sizeDelta = sizeDel;
-            ui.GetComponent<RectTransform>().localScale = scale;
+
+            if (ui.GetComponent<RectTransform>() != null)
+            {
+                ui.GetComponent<RectTransform>().anchoredPosition = anchorPos;
+                ui.GetComponent<RectTransform>().sizeDelta = sizeDel;
+                ui.GetComponent<RectTransform>().localScale = scale;
+            }
+            else
+            {
+                ui.transform.localPosition = anchorPos;
+                ui.transform.localScale = scale;
+            }
         }
 
         public override string ToString()
         {
-            return ">Name:" + windowName + ",ID:" + windowID + ",Type:" + windowType.ToString() + ",ShowMode:" + showMode.ToString() + ",Collider:" + colliderMode.ToString();
+            return ">Name:" + name + ",ID:" + id + ",Type:" + type.ToString() + ",ShowMode:" + mode.ToString() + ",Collider:" + collider.ToString();
         }
 
         public bool isActive()
@@ -239,7 +332,7 @@
         {
             if (m_currentPageNodes.Count < 0) return;
             TTUIPage topPage = m_currentPageNodes[m_currentPageNodes.Count-1];
-            if(topPage.showMode == UIWindowShowMode.HideOther)
+            if(topPage.mode == UIMode.HideOther)
             {
                 //form bottm to top.
                 for(int i=m_currentPageNodes.Count -2; i >= 0; i--)
@@ -249,23 +342,7 @@
             }
         }
 
-        public static void ShowPage<T>() where T :TTUIPage,new()
-        {
-            Type t = typeof(T);
-            string pageName = t.ToString();
-
-            if (m_allPages != null && m_allPages.ContainsKey(pageName))
-            {
-                ShowPage(pageName, m_allPages[pageName]);
-            }
-            else
-            {
-                T instance = new T();
-                ShowPage(pageName, instance);
-            }
-        }
-
-        public static void ShowPage(string pageName,TTUIPage pageInstance)
+        private static void ShowPage(string pageName,TTUIPage pageInstance,Action callback,bool isAsync)
         {
             if(string.IsNullOrEmpty(pageName) || pageInstance == null)
             {
@@ -281,11 +358,6 @@
             TTUIPage page = null;
             if (m_allPages.ContainsKey(pageName))
             {
-                //if sub page is active before.
-                if (m_allPages[pageName].isActive() == false)
-                {
-                    m_allPages[pageName].Show();
-                }
                 page = m_allPages[pageName];
             }
             else
@@ -295,7 +367,64 @@
                 page = pageInstance;
             }
 
+            //if active before,wont active again.
+            if (page.isActive() == false)
+            {
+                if (isAsync)
+                    page.Show(callback);
+                else
+                    page.Show();
+            }
+
             PopNode(page);
+        }
+
+        public static void ShowPage<T>() where T : TTUIPage, new()
+        {
+            Type t = typeof(T);
+            string pageName = t.ToString();
+
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
+            {
+                ShowPage(pageName, m_allPages[pageName], null, false);
+            }
+            else
+            {
+                T instance = new T();
+                ShowPage(pageName, instance, null, false);
+            }
+        }
+
+        public static void ShowPage(string pageName, TTUIPage pageInstance)
+        {
+            ShowPage(pageName, pageInstance, null, false);
+        }
+
+        /// <summary>
+        /// Async Show Page with Async loader bind in 'TTUIBind.Bind()'
+        /// </summary>
+        public static void ShowPage<T>(Action callback) where T : TTUIPage, new()
+        {
+            Type t = typeof(T);
+            string pageName = t.ToString();
+
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
+            {
+                ShowPage(pageName, m_allPages[pageName], callback,true);
+            }
+            else
+            {
+                T instance = new T();
+                ShowPage(pageName, instance, callback,true);
+            }
+        }
+
+        /// <summary>
+        /// Async Show Page with Async loader bind in 'TTUIBind.Bind()'
+        /// </summary>
+        public static void ShowPage(string pageName, TTUIPage pageInstance, Action callback)
+        {
+            ShowPage(pageName, pageInstance, callback, true);
         }
 
         /// <summary>
@@ -316,7 +445,10 @@
             if(m_currentPageNodes.Count > 0)
             {
                 TTUIPage page = m_currentPageNodes[m_currentPageNodes.Count - 1];
-                ShowPage(page.windowName, page);
+                if (page.isAsyncUI)
+                    ShowPage(page.name, page, null);
+                else
+                    ShowPage(page.name, page);
             }
         }
 

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class UITopBar : TTUIPage {
 
-    public UITopBar() : base(UIWindowType.Fixed, UIWindowShowMode.DoNothing, UIWindowColliderMode.None)
+    public UITopBar() : base(UIType.Fixed, UIMode.DoNothing, UICollider.None)
     {
         uiPath = "UIPrefab/Topbar";
     }

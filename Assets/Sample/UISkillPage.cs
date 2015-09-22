@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class UISkillPage : TTUIPage {
 
-    public UISkillPage() : base(UIWindowType.Normal, UIWindowShowMode.HideOther, UIWindowColliderMode.None)
+    public UISkillPage() : base(UIType.Normal, UIMode.HideOther, UICollider.None)
     {
         uiPath = "UIPrefab/UISkill";
     }

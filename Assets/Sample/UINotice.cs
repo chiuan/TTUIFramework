@@ -5,8 +5,7 @@ using UnityEngine.UI;
 
 public class UINotice : TTUIPage
 {
-
-    public UINotice() : base(UIWindowType.PopUp, UIWindowShowMode.DoNothing, UIWindowColliderMode.Normal)
+    public UINotice() : base(UIType.PopUp, UIMode.DoNothing, UICollider.Normal)
     {
         uiPath = "UIPrefab/Notice";
     }
@@ -19,5 +18,8 @@ public class UINotice : TTUIPage
         });
     }
 
+    public override void Refresh()
+    {
 
+    }
 }
