@@ -66,25 +66,19 @@
         //all pages with the union type
         private static Dictionary<string, TTUIPage> m_allPages;
         public static Dictionary<string, TTUIPage> allPages
-        {
-            get
-            {
-                return m_allPages;
-            }
-        }
+        { get { return m_allPages; } }
 
         //control 1>2>3>4>5 each page close will back show the previus page.
         private static List<TTUIPage> m_currentPageNodes;
         public static List<TTUIPage> currentPageNodes
-        {
-            get
-            {
-                return m_currentPageNodes;
-            }
-        }
+        { get { return m_currentPageNodes;} }
 
         //record this ui load mode.async or sync.
         private bool isAsyncUI = false;
+
+        //refresh page 's data.
+        private object m_data = null;
+        internal object data { get { return m_data; } }
 
         //delegate load ui function.
         public static Func<string,Object> delegateSyncLoadUI = null;
@@ -104,10 +98,23 @@
             this.gameObject.SetActive(true);
         }
 
-        ///Deactive this UI
+        /// <summary>
+        /// Only Deactive UI wont clear Data.
+        /// </summary>
         public virtual void Hide()
         {
             this.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Destroy UI and clear Page Data.
+        /// </summary>
+        public virtual void Close()
+        {
+            this.gameObject.SetActive(false);
+
+            //set this page's data null when hide.
+            this.m_data = null;
         }
 
         #endregion
@@ -342,7 +349,23 @@
             }
         }
 
-        private static void ShowPage(string pageName,TTUIPage pageInstance,Action callback,bool isAsync)
+        private static void ShowPage<T>(Action callback,object pageData,bool isAsync) where T : TTUIPage, new()
+        {
+            Type t = typeof(T);
+            string pageName = t.ToString();
+
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
+            {
+                ShowPage(pageName, m_allPages[pageName], callback, pageData,isAsync);
+            }
+            else
+            {
+                T instance = new T();
+                ShowPage(pageName, instance, callback, pageData,isAsync);
+            }
+        }
+
+        private static void ShowPage(string pageName,TTUIPage pageInstance,Action callback,object pageData,bool isAsync)
         {
             if(string.IsNullOrEmpty(pageName) || pageInstance == null)
             {
@@ -363,13 +386,15 @@
             else
             {
                 m_allPages.Add(pageName, pageInstance);
-                pageInstance.Show();
                 page = pageInstance;
             }
 
             //if active before,wont active again.
             if (page.isActive() == false)
             {
+                //before show should set this data if need. maybe.!!
+                page.m_data = pageData;
+
                 if (isAsync)
                     page.Show(callback);
                 else
@@ -379,25 +404,30 @@
             PopNode(page);
         }
 
+        /// <summary>
+        /// Sync Show Page
+        /// </summary>
         public static void ShowPage<T>() where T : TTUIPage, new()
         {
-            Type t = typeof(T);
-            string pageName = t.ToString();
+            ShowPage<T>(null, null, false);
+        }
 
-            if (m_allPages != null && m_allPages.ContainsKey(pageName))
-            {
-                ShowPage(pageName, m_allPages[pageName], null, false);
-            }
-            else
-            {
-                T instance = new T();
-                ShowPage(pageName, instance, null, false);
-            }
+        /// <summary>
+        /// Sync Show Page With Page Data Input.
+        /// </summary>
+        public static void ShowPage<T>(object pageData) where T : TTUIPage, new()
+        {
+            ShowPage<T>(null, pageData, false);
         }
 
         public static void ShowPage(string pageName, TTUIPage pageInstance)
         {
-            ShowPage(pageName, pageInstance, null, false);
+            ShowPage(pageName, pageInstance, null, null, false);
+        }
+
+        public static void ShowPage(string pageName, TTUIPage pageInstance,object pageData)
+        {
+            ShowPage(pageName, pageInstance, null, pageData, false);
         }
 
         /// <summary>
@@ -405,18 +435,12 @@
         /// </summary>
         public static void ShowPage<T>(Action callback) where T : TTUIPage, new()
         {
-            Type t = typeof(T);
-            string pageName = t.ToString();
+            ShowPage<T>(callback, null, true);
+        }
 
-            if (m_allPages != null && m_allPages.ContainsKey(pageName))
-            {
-                ShowPage(pageName, m_allPages[pageName], callback,true);
-            }
-            else
-            {
-                T instance = new T();
-                ShowPage(pageName, instance, callback,true);
-            }
+        public static void ShowPage<T>(Action callback,object pageData) where T : TTUIPage, new()
+        {
+            ShowPage<T>(callback, pageData, true);
         }
 
         /// <summary>
@@ -424,7 +448,12 @@
         /// </summary>
         public static void ShowPage(string pageName, TTUIPage pageInstance, Action callback)
         {
-            ShowPage(pageName, pageInstance, callback, true);
+            ShowPage(pageName, pageInstance, callback, null, true);
+        }
+
+        public static void ShowPage(string pageName, TTUIPage pageInstance, Action callback,object pageData)
+        {
+            ShowPage(pageName, pageInstance, callback, pageData, true);
         }
 
         /// <summary>
@@ -438,7 +467,7 @@
 
             TTUIPage closePage = m_currentPageNodes[m_currentPageNodes.Count - 1];
             m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
-            closePage.Hide();
+            closePage.Close();
 
             //show older page.
             //TODO:Sub pages.belong to root node.
