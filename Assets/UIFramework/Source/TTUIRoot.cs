@@ -94,5 +94,10 @@
 
             return go;
         }
+
+        void OnDestroy()
+        {
+            m_Instance = null;
+        }
     }
 }
