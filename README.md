@@ -4,10 +4,7 @@ UI Framework For Unity3D
 >>UI like a book,all you see are `pages`.you can easy jumpto between pages.
 >>>When create a new page ,only need to override some function!
 >>>>Simple!Simple!Simple! (>,< important thing need 3 times.haha...)
->>>>>[THINKING IN IMAGE](https://www.processon.com/embed/55ee822fe4b0f2eb8914c311)
-
-
-
+>>>>>[THINKING IN IMAGE](https://www.processon.com/embed/55ee822fe4b0f2eb8914c311)  
 >>>>>[Thanks This Guy](https://github.com/MrNerverDie/Unity-UI-Framework)
 
 ## Usage
@@ -39,6 +36,10 @@ all your new page should inherit from `TTUIPage`
 `virtual void Active()` this is how to active this page,default is this.gameObject.SetActive(true)  
 `virtual void Hide()` this is how to deactive this page,default is this.gameObject.SetActive(false)  
 `virtual void Close()` NOTE:this is how to `Destroy` your page! when `return` close means clear DATA!!  
+
+## Set Load UI Api Delegate
+`TTUIBind.cs` is where you can do that.you can set `TTUIPage.delegateSyncLoadUI = Resources.Load` how to load ui.
+NOTE:the `uiPath` is used for this load action<string>.
 
 ## Write Your MVC page!  
 in Sample folder's TTSkillPage is simple to use MVC logic. clearly your `Refresh()` get your data. and your data only data! 
