@@ -16,6 +16,11 @@ public class UIMainPage : TTUIPage {
         {
             ShowPage<UISkillPage>();
         });
+
+        this.transform.Find("btn_battle").GetComponent<Button>().onClick.AddListener(() =>
+        {
+            ShowPage<UIBattle>();
+        });
     }
 
 
