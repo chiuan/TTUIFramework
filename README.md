@@ -32,7 +32,7 @@ NOTE:`object pageData` is your page's data instance. send or not depend on your 
 all your new page should inherit from `TTUIPage`  
 5 virtual functions should implement base on your page needed.  
 `virtual void Awake(GameObject go)` this is once when Instantiate.
-`virtual void Refresh()` this is call eachtime `ShowPage`  
+`virtual void Refresh()` when `ShowPage` call eachtime.
 `virtual void Active()` this is how to active this page,default is this.gameObject.SetActive(true)  
 `virtual void Hide()` this is how to deactive this page,default is this.gameObject.SetActive(false)
 
