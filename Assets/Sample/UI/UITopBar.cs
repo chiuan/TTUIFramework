@@ -10,7 +10,7 @@ public class UITopBar : TTUIPage {
         uiPath = "UIPrefab/Topbar";
     }
 
-    public override void Awake()
+    public override void Awake(GameObject go)
     {
         this.gameObject.transform.Find("btn_back").GetComponent<Button>().onClick.AddListener(() =>
         {

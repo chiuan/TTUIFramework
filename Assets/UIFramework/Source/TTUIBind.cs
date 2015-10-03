@@ -19,7 +19,7 @@
 
                 //bind for your loader api to load UI.
                 TTUIPage.delegateSyncLoadUI = Resources.Load;
-                //TTUIPage.delegateAsyncLoadUI = 
+                //TTUIPage.delegateAsyncLoadUI = UILoader.Load;
 
             }
         }

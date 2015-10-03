@@ -10,7 +10,7 @@ public class UIMainPage : TTUIPage {
         uiPath = "UIPrefab/UIMain";
     }
 
-    public override void Awake()
+    public override void Awake(GameObject go)
     {
         this.transform.Find("btn_skill").GetComponent<Button>().onClick.AddListener(() =>
         {

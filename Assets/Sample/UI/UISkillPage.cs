@@ -18,7 +18,7 @@ public class UISkillPage : TTUIPage {
         uiPath = "UIPrefab/UISkill";
     }
 
-    public override void Awake()
+    public override void Awake(GameObject go)
     {
         skillList = this.transform.Find("list").gameObject;
         skillDesc = this.transform.Find("desc").gameObject;
@@ -48,7 +48,7 @@ public class UISkillPage : TTUIPage {
 
     }
 
-    public override void Close()
+    public override void Hide()
     {
         for(int i=0; i < skillItems.Count; i++)
         {

@@ -19,9 +19,10 @@
 
     public enum UIType
     {
-        Normal,    // 可推出界面(UIMainMenu,UIRank等)
-        Fixed,     // 固定窗口(UITopBar等)
-        PopUp,     // 模式窗口
+        Normal,    
+        Fixed,     
+        PopUp,     
+        None,      //独立的窗口
     }
 
     public enum UIMode
@@ -76,9 +77,12 @@
         //record this ui load mode.async or sync.
         private bool isAsyncUI = false;
 
+        //this page active flag
+        protected bool isActived = false;
+
         //refresh page 's data.
         private object m_data = null;
-        internal object data { get { return m_data; } }
+        protected object data { get { return m_data; } }
 
         //delegate load ui function.
         public static Func<string,Object> delegateSyncLoadUI = null;
@@ -87,7 +91,7 @@
         #region virtual api
         
         ///When Instance UI Ony Once.
-        public virtual void Awake() { }
+        public virtual void Awake(GameObject go) { }
 
         ///Show UI Refresh Eachtime.
         public virtual void Refresh() { }
@@ -96,6 +100,7 @@
         public virtual void Active()
         {
             this.gameObject.SetActive(true);
+            isActived = true;
         }
 
         /// <summary>
@@ -104,15 +109,7 @@
         public virtual void Hide()
         {
             this.gameObject.SetActive(false);
-        }
-
-        /// <summary>
-        /// Destroy UI and clear Page Data.
-        /// </summary>
-        public virtual void Close()
-        {
-            this.gameObject.SetActive(false);
-
+            isActived = false;
             //set this page's data null when hide.
             this.m_data = null;
         }
@@ -141,7 +138,7 @@
         protected void Show()
         {
             //1:instance UI
-            if (this.gameObject == null)
+            if (this.gameObject == null && string.IsNullOrEmpty(uiPath) == false)
             {
                 GameObject go = null;
                 if (delegateSyncLoadUI != null)
@@ -164,7 +161,7 @@
                 AnchorUIGameObject(go);
 
                 //after instance should awake init.
-                Awake();
+                Awake(go);
 
                 //mark this ui sync ui
                 isAsyncUI = false;
@@ -175,6 +172,9 @@
 
             //3:animation active.
             Active();
+
+            //4:popup this node to top if need back.
+            PopNode(this);
         }
 
         /// <summary>
@@ -188,7 +188,8 @@
         IEnumerator AsyncShow(Action callback)
         {
             //1:Instance UI
-            if(this.gameObject == null)
+            //FIX:support this is manager multi gameObject,instance by your self.
+            if (this.gameObject == null && string.IsNullOrEmpty(uiPath) == false)
             {
                 GameObject go = null;
                 bool _loading = true;
@@ -196,15 +197,26 @@
                 {
                     go = o != null ? GameObject.Instantiate(o) as GameObject : null;
                     AnchorUIGameObject(go);
-                    Awake();
+                    Awake(go);
                     isAsyncUI = true;
                     _loading = false;
+
+                    //:animation active.
+                    Active();
+
+                    //:refresh ui component.
+                    Refresh();
+
+                    //:popup this node to top if need back.
+                    PopNode(this);
+
+                    if (callback != null) callback();
                 });
 
                 float _t0 = Time.realtimeSinceStartup;
                 while (_loading)
                 {
-                    if(Time.realtimeSinceStartup - _t0 >= 10.0f)
+                    if (Time.realtimeSinceStartup - _t0 >= 10.0f)
                     {
                         Debug.LogError("[UI] WTF async load your ui prefab timeout!");
                         yield break;
@@ -212,19 +224,24 @@
                     yield return null;
                 }
             }
+            else
+            {
+                //:animation active.
+                Active();
 
-            //2:refresh ui component.
-            Refresh();
+                //:refresh ui component.
+                Refresh();
 
-            //3:animation active.
-            Active();
+                //:popup this node to top if need back.
+                PopNode(this);
 
-            if (callback != null) callback();
+                if (callback != null) callback();
+            }
         }
 
         internal bool CheckIfNeedBack()
         {
-            if (type == UIType.Fixed || type == UIType.PopUp) return false;
+            if (type == UIType.Fixed || type == UIType.PopUp || type == UIType.None) return false;
             else if (mode == UIMode.NoNeedBack) return false;
             return true;
         }
@@ -288,7 +305,10 @@
 
         public bool isActive()
         {
-            return gameObject != null && gameObject.activeSelf;
+            //fix,if this page is not only one gameObject
+            //so,should check isActived too.
+            bool ret = gameObject != null && gameObject.activeSelf;
+            return ret || isActived;
         }
 
         #endregion
@@ -300,6 +320,9 @@
             return page != null && page.CheckIfNeedBack();
         }
 
+        /// <summary>
+        /// make the target node to the top.
+        /// </summary>
         private static void PopNode(TTUIPage page)
         {
             if (m_currentPageNodes == null)
@@ -319,17 +342,24 @@
                 return;
             }
 
+            bool _isFound = false;
             for(int i=0; i < m_currentPageNodes.Count; i++)
             {
                 if (m_currentPageNodes[i].Equals(page))
                 {
                     m_currentPageNodes.RemoveAt(i);
                     m_currentPageNodes.Add(page);
-                    return;
+                    _isFound = true;
+                    break;
                 }
             }
 
-            m_currentPageNodes.Add(page);
+            //if dont found in old nodes
+            //should add in nodelist.
+            if (!_isFound)
+            {
+                m_currentPageNodes.Add(page);
+            }
 
             //after pop should hide the old node if need.
             HideOldNodes();
@@ -347,6 +377,11 @@
                     m_currentPageNodes[i].Hide();
                 }
             }
+        }
+
+        public static void ClearNodes()
+        {
+            m_currentPageNodes.Clear();
         }
 
         private static void ShowPage<T>(Action callback,object pageData,bool isAsync) where T : TTUIPage, new()
@@ -390,7 +425,7 @@
             }
 
             //if active before,wont active again.
-            if (page.isActive() == false)
+            //if (page.isActive() == false)
             {
                 //before show should set this data if need. maybe.!!
                 page.m_data = pageData;
@@ -400,8 +435,6 @@
                 else
                     page.Show();
             }
-
-            PopNode(page);
         }
 
         /// <summary>
@@ -461,13 +494,13 @@
         /// </summary>
         public static void ClosePage()
         {
-            Debug.Log("Back&Close PageNodes Count:" + m_currentPageNodes.Count);
+            //Debug.Log("Back&Close PageNodes Count:" + m_currentPageNodes.Count);
 
             if (m_currentPageNodes == null || m_currentPageNodes.Count <= 1) return;
 
             TTUIPage closePage = m_currentPageNodes[m_currentPageNodes.Count - 1];
             m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
-            closePage.Close();
+            closePage.Hide();
 
             //show older page.
             //TODO:Sub pages.belong to root node.

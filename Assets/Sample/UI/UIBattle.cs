@@ -11,7 +11,7 @@ public class UIBattle : TTUIPage {
         uiPath = "UIPrefab/UIBattle";
     }
 
-    public override void Awake()
+    public override void Awake(GameObject go)
     {
         this.transform.Find("btn_skill").GetComponent<Button>().onClick.AddListener(OnClickSkillGo);
         this.transform.Find("btn_battle").GetComponent<Button>().onClick.AddListener(OnClickGoBattle);
