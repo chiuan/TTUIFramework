@@ -31,15 +31,15 @@ NOTE:`object pageData` is your page's data instance. send or not depend on your 
 ### How to create new page?  
 all your new page should inherit from `TTUIPage`  
 5 virtual functions should implement base on your page needed.  
-`virtual void Awake()` this is once when Instantiate.  
+`virtual void Awake(GameObject go)` this is once when Instantiate.
 `virtual void Refresh()` this is call eachtime `ShowPage`  
 `virtual void Active()` this is how to active this page,default is this.gameObject.SetActive(true)  
-`virtual void Hide()` this is how to deactive this page,default is this.gameObject.SetActive(false)  
-`virtual void Close()` NOTE:this is how to `Destroy` your page! when `return` close means clear DATA!!  
+`virtual void Hide()` this is how to deactive this page,default is this.gameObject.SetActive(false)
 
 ## Set Load UI Api Delegate
 `TTUIBind.cs` is where you can do that.you can set `TTUIPage.delegateSyncLoadUI = Resources.Load` how to load ui.
 NOTE:the `uiPath` is used for this load action<string>.
+NOTE:your uiPath = "" means wont load ui, so you can manager your speical page by yourself.
 
 ## Write Your MVC page!  
 in Sample folder's TTSkillPage is simple to use MVC logic. clearly your `Refresh()` get your data. and your data only data! 
