@@ -167,13 +167,13 @@
                 isAsyncUI = false;
             }
 
-            //2:refresh ui component.
-            Refresh();
-
-            //3:animation active.
+            //:animation or init when active.
             Active();
 
-            //4:popup this node to top if need back.
+            //:refresh ui component.
+            Refresh();
+
+            //:popup this node to top if need back.
             PopNode(this);
         }
 
