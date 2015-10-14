@@ -19,9 +19,9 @@
 
     public enum UIType
     {
-        Normal,    
-        Fixed,     
-        PopUp,     
+        Normal,
+        Fixed,
+        PopUp,
         None,      //独立的窗口
     }
 
@@ -72,7 +72,7 @@
         //control 1>2>3>4>5 each page close will back show the previus page.
         private static List<TTUIPage> m_currentPageNodes;
         public static List<TTUIPage> currentPageNodes
-        { get { return m_currentPageNodes;} }
+        { get { return m_currentPageNodes; } }
 
         //record this ui load mode.async or sync.
         private bool isAsyncUI = false;
@@ -85,11 +85,11 @@
         protected object data { get { return m_data; } }
 
         //delegate load ui function.
-        public static Func<string,Object> delegateSyncLoadUI = null;
-        public static Action<string,Action<Object>> delegateAsyncLoadUI = null;
+        public static Func<string, Object> delegateSyncLoadUI = null;
+        public static Action<string, Action<Object>> delegateAsyncLoadUI = null;
 
         #region virtual api
-        
+
         ///When Instance UI Ony Once.
         public virtual void Awake(GameObject go) { }
 
@@ -119,7 +119,7 @@
         #region internal api
 
         private TTUIPage() { }
-        public TTUIPage(UIType type, UIMode mod,UICollider col)
+        public TTUIPage(UIType type, UIMode mod, UICollider col)
         {
             this.type = type;
             this.mode = mod;
@@ -144,7 +144,7 @@
                 if (delegateSyncLoadUI != null)
                 {
                     Object o = delegateSyncLoadUI(uiPath);
-                    go = o != null ? GameObject.Instantiate(o) as GameObject: null;
+                    go = o != null ? GameObject.Instantiate(o) as GameObject : null;
                 }
                 else
                 {
@@ -242,7 +242,7 @@
         internal bool CheckIfNeedBack()
         {
             if (type == UIType.Fixed || type == UIType.PopUp || type == UIType.None) return false;
-            else if (mode == UIMode.NoNeedBack) return false;
+            else if (mode == UIMode.NoNeedBack || mode == UIMode.DoNothing) return false;
             return true;
         }
 
@@ -275,11 +275,11 @@
             {
                 ui.transform.SetParent(TTUIRoot.Instance.fixedRoot);
             }
-            else if(type == UIType.Normal)
+            else if (type == UIType.Normal)
             {
                 ui.transform.SetParent(TTUIRoot.Instance.normalRoot);
             }
-            else if(type == UIType.PopUp)
+            else if (type == UIType.PopUp)
             {
                 ui.transform.SetParent(TTUIRoot.Instance.popupRoot);
             }
@@ -330,20 +330,20 @@
                 m_currentPageNodes = new List<TTUIPage>();
             }
 
-            if(page == null)
+            if (page == null)
             {
                 Debug.LogError("[UI] page popup is null.");
                 return;
             }
 
             //sub pages should not need back.
-            if(CheckIfNeedBack(page) == false)
+            if (CheckIfNeedBack(page) == false)
             {
                 return;
             }
 
             bool _isFound = false;
-            for(int i=0; i < m_currentPageNodes.Count; i++)
+            for (int i = 0; i < m_currentPageNodes.Count; i++)
             {
                 if (m_currentPageNodes[i].Equals(page))
                 {
@@ -368,11 +368,11 @@
         private static void HideOldNodes()
         {
             if (m_currentPageNodes.Count < 0) return;
-            TTUIPage topPage = m_currentPageNodes[m_currentPageNodes.Count-1];
-            if(topPage.mode == UIMode.HideOther)
+            TTUIPage topPage = m_currentPageNodes[m_currentPageNodes.Count - 1];
+            if (topPage.mode == UIMode.HideOther)
             {
                 //form bottm to top.
-                for(int i=m_currentPageNodes.Count -2; i >= 0; i--)
+                for (int i = m_currentPageNodes.Count - 2; i >= 0; i--)
                 {
                     m_currentPageNodes[i].Hide();
                 }
@@ -384,25 +384,25 @@
             m_currentPageNodes.Clear();
         }
 
-        private static void ShowPage<T>(Action callback,object pageData,bool isAsync) where T : TTUIPage, new()
+        private static void ShowPage<T>(Action callback, object pageData, bool isAsync) where T : TTUIPage, new()
         {
             Type t = typeof(T);
             string pageName = t.ToString();
 
             if (m_allPages != null && m_allPages.ContainsKey(pageName))
             {
-                ShowPage(pageName, m_allPages[pageName], callback, pageData,isAsync);
+                ShowPage(pageName, m_allPages[pageName], callback, pageData, isAsync);
             }
             else
             {
                 T instance = new T();
-                ShowPage(pageName, instance, callback, pageData,isAsync);
+                ShowPage(pageName, instance, callback, pageData, isAsync);
             }
         }
 
-        private static void ShowPage(string pageName,TTUIPage pageInstance,Action callback,object pageData,bool isAsync)
+        private static void ShowPage(string pageName, TTUIPage pageInstance, Action callback, object pageData, bool isAsync)
         {
-            if(string.IsNullOrEmpty(pageName) || pageInstance == null)
+            if (string.IsNullOrEmpty(pageName) || pageInstance == null)
             {
                 Debug.LogError("[UI] show page error with :" + pageName + " maybe null instance.");
                 return;
@@ -458,7 +458,7 @@
             ShowPage(pageName, pageInstance, null, null, false);
         }
 
-        public static void ShowPage(string pageName, TTUIPage pageInstance,object pageData)
+        public static void ShowPage(string pageName, TTUIPage pageInstance, object pageData)
         {
             ShowPage(pageName, pageInstance, null, pageData, false);
         }
@@ -471,7 +471,7 @@
             ShowPage<T>(callback, null, true);
         }
 
-        public static void ShowPage<T>(Action callback,object pageData) where T : TTUIPage, new()
+        public static void ShowPage<T>(Action callback, object pageData) where T : TTUIPage, new()
         {
             ShowPage<T>(callback, pageData, true);
         }
@@ -484,7 +484,7 @@
             ShowPage(pageName, pageInstance, callback, null, true);
         }
 
-        public static void ShowPage(string pageName, TTUIPage pageInstance, Action callback,object pageData)
+        public static void ShowPage(string pageName, TTUIPage pageInstance, Action callback, object pageData)
         {
             ShowPage(pageName, pageInstance, callback, pageData, true);
         }
@@ -504,7 +504,7 @@
 
             //show older page.
             //TODO:Sub pages.belong to root node.
-            if(m_currentPageNodes.Count > 0)
+            if (m_currentPageNodes.Count > 0)
             {
                 TTUIPage page = m_currentPageNodes[m_currentPageNodes.Count - 1];
                 if (page.isAsyncUI)
@@ -514,6 +514,74 @@
             }
         }
 
+        /// <summary>
+        /// 关闭指定的页面
+        /// </summary>
+        public static void ClosePage(TTUIPage target)
+        {
+            if (target == null || target.isActive() == false) return;
+
+            //如果这个是nodes里面的最顶部
+            if (m_currentPageNodes != null && m_currentPageNodes.Count >= 1 && m_currentPageNodes[m_currentPageNodes.Count - 1] == target)
+            {
+                m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
+                target.Hide();
+
+                //show older page.
+                //TODO:Sub pages.belong to root node.
+                if (m_currentPageNodes.Count > 0)
+                {
+                    TTUIPage page = m_currentPageNodes[m_currentPageNodes.Count - 1];
+                    if (page.isAsyncUI)
+                        ShowPage(page.name, page, null);
+                    else
+                        ShowPage(page.name, page);
+                }
+            }
+            else if (target.CheckIfNeedBack())
+            {
+                for (int i = 0; i < m_currentPageNodes.Count; i++)
+                {
+                    if (m_currentPageNodes[i] == target)
+                    {
+                        m_currentPageNodes.RemoveAt(i);
+                        target.Hide();
+                        break;
+                    }
+                }
+            }
+
+            target.Hide();
+        }
+
+        public static void ClosePage<T>() where T : TTUIPage
+        {
+            Type t = typeof(T);
+            string pageName = t.ToString();
+
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
+            {
+                ClosePage(m_allPages[pageName]);
+            }
+            else
+            {
+                Debug.LogError(pageName + "havnt show yet!");
+            }
+        }
+
+        public static void ClosePage(string pageName)
+        {
+            if (m_allPages != null && m_allPages.ContainsKey(pageName))
+            {
+                ClosePage(m_allPages[pageName]);
+            }
+            else
+            {
+                Debug.LogError(pageName + " havnt show yet!");
+            }
+        }
+
         #endregion
-    }
-}
+
+    }//TTUIPage
+}//namespace
