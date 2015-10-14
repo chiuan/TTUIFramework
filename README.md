@@ -28,6 +28,12 @@ NOTE:`object pageData` is your page's data instance. send or not depend on your 
 `TTUIPage.ShowPage(string pageName,TTUIPage pageInstance,Action callback)`  
 `TTUIPage.ShowPage(string pageName,TTUIPage pageInstance,Action callback,object pageData)`  
 
+#### ClosePage api:
+`TTUIPage.ClosePage()` close the top page in nodes
+`TTUIPage.ClosePage<T>()`
+`TTUIPage.ClosePage(string pageName)`
+`TTUIPage.ClosePage(TTUIPage target)`
+
 ### How to create new page?  
 all your new page should inherit from `TTUIPage`  
 5 virtual functions should implement base on your page needed.  
@@ -42,4 +48,4 @@ NOTE:the `uiPath` is used for this load action<string>.
 NOTE:your uiPath = "" means wont load ui, so you can manager your speical page by yourself.
 
 ## Write Your MVC page!  
-in Sample folder's TTSkillPage is simple to use MVC logic. clearly your `Refresh()` get your data. and your data only data! 
+in Sample folder's TTSkillPage is simple to use MVC logic. clearly your `Refresh()` get your data. and your data only data!
