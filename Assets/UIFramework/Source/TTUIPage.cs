@@ -500,7 +500,6 @@
 
             TTUIPage closePage = m_currentPageNodes[m_currentPageNodes.Count - 1];
             m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
-            closePage.Hide();
 
             //show older page.
             //TODO:Sub pages.belong to root node.
@@ -508,24 +507,45 @@
             {
                 TTUIPage page = m_currentPageNodes[m_currentPageNodes.Count - 1];
                 if (page.isAsyncUI)
-                    ShowPage(page.name, page, null);
+                    ShowPage(page.name, page, () =>
+                    {
+                        closePage.Hide();
+                    });
                 else
+                {
                     ShowPage(page.name, page);
+
+                    //after show to hide().
+                    closePage.Hide();
+                }
             }
         }
 
         /// <summary>
-        /// 关闭指定的页面
+        /// Close target page
         /// </summary>
         public static void ClosePage(TTUIPage target)
         {
-            if (target == null || target.isActive() == false) return;
+            if (target == null) return;
+            if (target.isActive() == false)
+            {
+                if (m_currentPageNodes != null)
+                {
+                    for (int i = 0; i < m_currentPageNodes.Count; i++)
+                    {
+                        if (m_currentPageNodes[i] == target)
+                        {
+                            m_currentPageNodes.RemoveAt(i);
+                            break;
+                        }
+                    }
+                    return;
+                }
+            }
 
-            //如果这个是nodes里面的最顶部
             if (m_currentPageNodes != null && m_currentPageNodes.Count >= 1 && m_currentPageNodes[m_currentPageNodes.Count - 1] == target)
             {
                 m_currentPageNodes.RemoveAt(m_currentPageNodes.Count - 1);
-                target.Hide();
 
                 //show older page.
                 //TODO:Sub pages.belong to root node.
@@ -533,9 +553,15 @@
                 {
                     TTUIPage page = m_currentPageNodes[m_currentPageNodes.Count - 1];
                     if (page.isAsyncUI)
-                        ShowPage(page.name, page, null);
+                        ShowPage(page.name, page, () =>
+                        {
+                            target.Hide();
+                        });
                     else
+                    {
                         ShowPage(page.name, page);
+                        target.Hide();
+                    }
                 }
             }
             else if (target.CheckIfNeedBack())
