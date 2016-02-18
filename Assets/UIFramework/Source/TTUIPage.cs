@@ -374,7 +374,8 @@
                 //form bottm to top.
                 for (int i = m_currentPageNodes.Count - 2; i >= 0; i--)
                 {
-                    m_currentPageNodes[i].Hide();
+                    if(m_currentPageNodes[i].isActive())
+                        m_currentPageNodes[i].Hide();
                 }
             }
         }
