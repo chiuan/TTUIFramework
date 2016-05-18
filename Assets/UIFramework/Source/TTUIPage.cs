@@ -563,6 +563,8 @@
                         ShowPage(page.name, page);
                         target.Hide();
                     }
+
+                    return;
                 }
             }
             else if (target.CheckIfNeedBack())
