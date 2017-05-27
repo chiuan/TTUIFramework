@@ -9,6 +9,7 @@ public class GameMain : MonoBehaviour {
 	void Start () {
         TTUIPage.ShowPage<UITopBar>();
         TTUIPage.ShowPage<UIMainPage>();
+		// var root = TTUIRoot.Instance;
     }
 	
 	// Update is called once per frame
